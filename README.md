@@ -1,3 +1,6 @@
+Here's your **ITU_S Technical Specification v0.0.1** in your IDA spec format.
+
+---
 
 ---
 # IDA INDUSTRIES
@@ -13,27 +16,10 @@
 | **Document ID** | ITU-SPEC-001 |
 | **Version** | 0.0.1 |
 | **Status** | Draft |
-| **Date** | 2026-04-23 |
+| **Date** | 2026-05-04 |
 | **Author** | IDA |
 | **Contributor** | Akashi |
 | **Classification** | Internal / Open Source |
-
----
-
-## Table of Contents
-
-1. Overview
-2. Project Philosophy
-3. Technology Stack
-4. Domain Architecture
-5. Black Box Contracts
-6. File Structure
-7. Development Workflow
-8. Integration Testing Protocol
-9. Documentation Standard
-10. Version 0.1 Milestone
-11. Risk Register
-12. Glossary
 
 ---
 
@@ -45,21 +31,24 @@ Into The Unknown: Survival (ITU_S) is a 2D top-down zombie survival game develop
 
 ### 1.2 Vision
 
-A realistic survival game where man is only as capable as their tools. No leveling. No bullet sponges. Gear progression only. One bite kills. Bullets are indiscriminate.
+A realistic survival game where **man is only as capable as their tools**. No leveling. No bullet sponges. Gear progression only. One bite kills. Bullets are indiscriminate.
 
 ### 1.3 Inspiration
 
-- Metro Exodus (atmosphere, ballistic realism, weapon feel)
-- World War Z (duct tape armor, swarm intensity)
-- Real life (source of all stats and behavior)
+| Source | Lesson |
+|--------|--------|
+| **Metro Exodus** | Atmosphere, ballistic realism, weapon feel |
+| **World War Z** | Duct tape armor, swarm intensity |
+| **Project Zomboid** | Inventory tetris, weight reduction, container system |
+| **Real life** | Source of all stats and behavior |
 
 ### 1.4 Development Team
 
 | Role | Owner | Responsibility |
 |------|-------|----------------|
-| Combat/AI Domain | IDA | Player, infected, damage system, AI behavior |
-| Items/Inventory Domain | Akashi | Weapons, armor, equipment, survival items |
-| Integration | Both | Integration tests, contract verification |
+| **Combat/AI Domain** | IDA | Entities, factions, AI, damage system, inventory, controllers |
+| **Items/Inventory Content** | Akashi | Weapons, armor, consumables, backpacks |
+| **Integration** | Both | Integration tests, contract verification |
 
 ---
 
@@ -69,11 +58,13 @@ A realistic survival game where man is only as capable as their tools. No leveli
 
 | Pillar | Meaning |
 |--------|---------|
-| Full realism | Stats and behavior sourced from real life |
-| Man = tools | Player stats frozen. Progression through gear only. |
-| Indiscriminate bullets | No friendly fire toggle. Bullets hit what they hit. |
-| Health is armor | Bite protection = arm guard layers. Duct tape = healing. |
-| Black Box Doctrine | Sealed domains, contracts only, no internal access. |
+| **Full realism** | Stats and behavior sourced from real life |
+| **Man = tools** | Player stats frozen. Progression through gear only. |
+| **Indiscriminate bullets** | No friendly fire toggle. Bullets hit what they hit. |
+| **Health is armor** | Bite protection = arm guard layers. Duct tape = healing. |
+| **Black Box Doctrine** | Sealed domains, contracts only, no internal access. |
+| **Unix Philosophy** | Small, focused modules that plug together. |
+| **Multiplayer from day one** | Possession pattern. Entity persists beyond controller. |
 
 ### 2.2 Anti-Pillars (What We Don't Do)
 
@@ -83,6 +74,7 @@ A realistic survival game where man is only as capable as their tools. No leveli
 | Faction-checking bullets | Real bullets don't check ID. |
 | Magic healing | Duct tape or nothing. |
 | Bullet sponges | One headshot kills. One bite kills (without armor). |
+| Deep inheritance chains | Flat > nested. Human/Infected only. |
 
 ---
 
@@ -105,275 +97,425 @@ A realistic survival game where man is only as capable as their tools. No leveli
 
 ---
 
-## 4. Domain Architecture
+## 4. Architecture
 
-### 4.1 Domain Ownership
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         IDA DOMAIN                          │
-│  (Combat, AI, Player, Infected, Damage System)              │
-│                                                             │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐         │
-│  │ Player  │  │ Walker  │  │ Runner  │  │ Large   │         │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘         │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ HitReceiver (interface) → hit(damage, type)         │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              │ Contract
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                       AKASHI DOMAIN                         │
-│  (Items, Inventory, Weapons, Armor, Equipment)              │
-│                                                             │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐         │
-│  │ Firearm │  │ Melee   │  │ Armor   │  │ Backpack│         │
-│  └─────────┘  └─────────┘  └─────────┘  └─────────┘         │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ Bullet → calls hit() on whatever it touches         │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 4.2 Separation Rule
+### 4.1 High-Level View
 
 ```
-NO cross-domain imports except:
-- HitReceiver interface
-- DamageType enum
-- Public getters documented in help.txt
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              CORE / GLUE                                 │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐  │
+│  │ GameOrchestrator│  │  LibGDXGame     │  │      InputHandler       │  │
+│  │ (Game Loop)     │  │  (Application)  │  │  (Keyboard/Mouse)       │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            VIEW (Rendering)                              │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐  │
+│  │   Sprites       │  │   UI (Inventory,│  │   Effects (Muzzle Flash,│  │
+│  │ (Entity Visals) │  │    Health Bar)  │  │    Blood, Bullet Trail) │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                            LOGIC (Pure Java)                             │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                │
+│  │   Entities    │  │   Controllers │  │   World       │                │
+│  │ (Human,       │  │ (Player, AI,  │  │ (Game State,  │                │
+│  │  Infected)    │  │  Null)        │  │  Spawning)    │                │
+│  └───────────────┘  └───────────────┘  └───────────────┘                │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐                │
+│  │   Inventory   │  │   Messages    │  │   AI Library  │                │
+│  │ (Containers,  │  │ (HitReceiver, │  │ (WalkerAI,    │                │
+│  │  Weight, Slot)│  │  DamageType)  │  │  TankAI, etc) │                │
+│  └───────────────┘  └───────────────┘  └───────────────┘                │
+│  ┌───────────────┐                                                      │
+│  │   Items (IF)  │                                                      │
+│  │ (Interface    │                                                      │
+│  │  for Akashi)  │                                                      │
+│  └───────────────┘                                                      │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        AKASHI ITEMS (Implementations)                    │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────┐  │
+│  │    Weapons      │  │     Armor       │  │   Consumables           │  │
+│  │ (AKM, Axe, Bow) │  │ (ArmGuard,      │  │ (DuctTape, Food, Water) │  │
+│  └─────────────────┘  └─────────────────┘  └─────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 4.2 Separation Rules
+
+| Layer | Can Import | Cannot Import |
+|-------|------------|----------------|
+| **logic/** | Java standard lib only | LibGDX, view/ |
+| **view/** | logic/, LibGDX | core/ (except via orchestrator) |
+| **core/** | logic/, view/, LibGDX | - |
+| **akashi_items/** | logic/items/Item, logic/messages/ | logic/entity/, logic/inventory/ |
 
 ---
 
-## 5. Black Box Contracts
+## 5. Entity Hierarchy
 
-### 5.1 Primary Contract: HitReceiver
+### 5.1 Inheritance Chain (Flat)
+
+```
+BaseEntity (lib/entity/)
+├── Human (entities/human/)
+│   ├── PlayerEntity
+│   ├── BanditEntity
+│   └── ScavengerEntity
+└── Infected (entities/infected/)
+    ├── InfectedWalkerEntity
+    ├── BoomerEntity (extends InfectedWalkerEntity)
+    ├── ViralEntity
+    ├── JumperEntity
+    ├── TankEntity
+    └── EvolvedEntity
+```
+
+### 5.2 Entity Composition
+
+Each entity is **self-contained** in its own folder:
+
+```
+entities/human/player/
+├── PlayerEntity.java      (extends Human)
+├── PlayerAI.java          (null — player controller)
+├── PlayerSprite.java      (extends BaseSprite)
+└── Player_help.txt
+
+entities/infected/walker/
+├── InfectedWalkerEntity.java (extends Infected)
+├── InfectedWalkerAI.java     (extends BaseAI)
+├── InfectedWalkerSprite.java (extends BaseSprite)
+└── InfectedWalker_help.txt
+```
+
+### 5.3 Faction Enum
 
 ```java
-package com.itus.your_domain.damage;
+// lib/entity/Faction.java
+public enum Faction {
+    HUMAN,
+    INFECTED
+}
+```
 
+No deeper factions. AI handles behavior differences (Bandit attacks Army, etc.).
+
+---
+
+## 6. Controller Possession Pattern
+
+### 6.1 Concept
+
+| Component | Role |
+|-----------|------|
+| **Entity** | The in-game character (health, position, inventory). Persists. |
+| **Controller** | The driver (human or AI). Comes and goes. |
+
+### 6.2 Controller Types
+
+| Controller | Purpose |
+|------------|---------|
+| `PlayerController` | Human input (keyboard/mouse) |
+| `AIController` | AI decision making (wraps entity's AI) |
+| `NullController` | No controller (entity idle) |
+
+### 6.3 Flow
+
+```
+1. Entity spawned with AIController (NPC behavior)
+2. Player disconnects → PlayerController destroyed → Entity gets AIController
+3. Player reconnects → New PlayerController possesses same entity
+4. Entity dies → Controller relinquished → New entity for respawn
+```
+
+### 6.4 Multiplayer Ready
+
+- Entity exists independently of any controller
+- State can be synced over network (`EntityState` POJO)
+- Controller ID maps to network connection
+
+---
+
+## 7. Inventory System (Project Zomboid Style)
+
+### 7.1 Core Concepts
+
+| Concept | Description |
+|---------|-------------|
+| **Slots, not just weight** | Items occupy grid cells (size matters) |
+| **Container hierarchy** | Main inventory + optional backpack container |
+| **Weight reduction** | Items in backpack have reduced weight (bag distributes load) |
+| **Body slots** | Equipped items (chest, arms, back, hands) |
+| **Every entity has inventory** | Even zombies (pockets with random loot) |
+
+### 7.2 Inventory Components
+
+| Class | Responsibility |
+|-------|----------------|
+| `Inventory` | Main container + body slots + backpack reference |
+| `InventoryContainer` | Grid-based storage (width x height) |
+| `BodySlot` | Enum (CHEST, ARMS, BACK, HANDS, LEGS) |
+| `ItemStack` | Item + quantity + grid position |
+
+### 7.3 Weight Rules
+
+| State | Weight Calculation |
+|-------|--------------------|
+| Item in main inventory | Full weight |
+| Item in backpack | Weight × backpack.multiplier (e.g., 0.7) |
+| Item equipped | Full weight (on body, not carried) |
+
+### 7.4 Example Capacities
+
+| Entity | Main Inventory | Backpack | Body Slots |
+|--------|---------------|----------|------------|
+| Player | 5x5 (25 slots) | Optional (+8x10) | Chest, Arms, Back, Hands |
+| Bandit | 4x4 (16 slots) | None | Chest, Hands |
+| InfectedWalker | 2x3 (6 slots) | None | None (pockets only) |
+| Tank | 3x3 (9 slots) | None | None (carries nothing) |
+
+---
+
+## 8. AI Library
+
+### 8.1 Architecture
+
+- **`BaseAI`** interface (lib/ai/)
+- **Concrete AI implementations** live in each entity's folder
+- AI can extend other AI (e.g., `BoomerAI extends InfectedWalkerAI`)
+
+### 8.2 AI Interface
+
+```java
+public interface BaseAI {
+    void update(BaseEntity entity, float delta, GameWorld world);
+    void onDamage(BaseEntity entity, int damage, DamageType type);
+    void onDeath(BaseEntity entity, GameWorld world);
+}
+```
+
+### 8.3 AI Per Entity
+
+| Entity | AI Class | Extends |
+|--------|----------|---------|
+| InfectedWalker | `InfectedWalkerAI` | `BaseAI` |
+| Boomer | `BoomerAI` | `InfectedWalkerAI` (adds explode on death) |
+| Viral | `ViralAI` | `BaseAI` (faster chasing) |
+| Tank | `TankAI` | `BaseAI` (high health, smash) |
+| Evolved | `EvolvedAI` | `BaseAI` (spawn minions, use guns) |
+| Bandit | `BanditAI` | `BaseAI` (faction targeting) |
+
+---
+
+## 9. Messages (Cross-Domain Contracts)
+
+### 9.1 Purpose
+
+All communication between domains goes through `lib/messages/`.
+
+### 9.2 Message Types
+
+| Message | Sender | Receiver |
+|---------|--------|----------|
+| `HitReceiver.hit(damage, type)` | Bullet (Akashi) | Entity (IDA) |
+| `DamageType` enum | Any | Any |
+| `UseItemMessage` | PlayerController (IDA) | Inventory (IDA) |
+| `EquipItemMessage` | PlayerController (IDA) | Inventory (IDA) |
+| `DropLootMessage` | Entity (IDA) | World (IDA) |
+
+### 9.3 HitReceiver Contract
+
+```java
+// lib/messages/HitReceiver.java
 public interface HitReceiver {
     void hit(int damage, DamageType type);
 }
 
+// lib/messages/DamageType.java
 public enum DamageType {
-    BITE,       // Checks arm guard durability
-    BULLET,     // Checks ballistic vest
-    BLUNT,      // Direct health damage
-    EXPLOSION   // Area damage
+    BITE,      // Checks arm guard durability
+    BULLET,    // Checks ballistic vest
+    BLUNT,     // Direct health damage (fall, melee)
+    EXPLOSION  // Area damage
 }
 ```
 
-### 5.2 Contract Rules
-
-| Rule | Enforcement |
-|------|-------------|
-| Bullets call hit() on collision | Integration test |
-| Damage type must be correct | Integration test |
-| No direct Player import in Akashi domain | Code review |
-| No direct Item import in IDA domain | Code review |
-
-### 5.3 Player Health Model (IDA Domain)
-
-| Layer | Behavior |
-|-------|----------|
-| Flesh health | 0-100. Bite = 100 damage (instant death without armor). |
-| Arm guard | Absorbs bites. Each bite = -1 durability. |
-| Ballistic vest | Mitigates bullet damage. Tier-based reduction. |
-| Debuffs | Speed penalty at health thresholds (<75%, <50%, <25%). |
-
-### 5.4 Item Responsibilities (Akashi Domain)
-
-| Item | Provides |
-|------|----------|
-| Arm guard | Bite protection layers |
-| Duct tape | Repairs arm guard |
-| Ballistic vest | Bullet damage mitigation |
-| Backpack | Inventory slot capacity |
-| Firearm | Spawns bullets |
+**Akashi only needs this interface.** Nothing else.
 
 ---
 
-## 6. File Structure
-
-### 6.1 Source Layout
+## 10. File Structure
 
 ```
 core/src/main/java/com/itus/
 │
-├── ida_domain/                    👈 IDA owns this
-│   ├── player/
-│   │   ├── Player.java
-│   │   └── Player_help.txt
-│   ├── infected/
-│   │   ├── walker/
-│   │   │   ├── InfectedWalker.java
-│   │   │   └── InfectedWalker_help.txt
-│   │   └── (runner, large later)
-│   ├── damage/
-│   │   ├── HitReceiver.java
-│   │   ├── DamageType.java
-│   │   └── Damage_help.txt
-│   └── ai/
-│       ├── WalkerAI.java
-│       └── AI_help.txt
-│
-├── akashi_domain/                 👈 Akashi owns this
-│   ├── weapons/
-│   │   ├── firearm/
-│   │   │   ├── AKM.java
-│   │   │   └── AKM_help.txt
-│   │   └── melee/
-│   │       ├── Axe.java
-│   │       └── Axe_help.txt
-│   ├── items/
-│   │   ├── armor/
-│   │   │   ├── ArmGuard.java
-│   │   │   └── ArmGuard_help.txt
-│   │   └── consumables/
-│   │       ├── DuctTape.java
-│   │       └── DuctTape_help.txt
+├── lib/                                    👈 BASE CLASSES (framework)
+│   ├── entity/
+│   │   ├── BaseEntity.java
+│   │   ├── BaseEntity_help.txt
+│   │   └── Faction.java
+│   ├── ai/
+│   │   ├── BaseAI.java
+│   │   └── BaseAI_help.txt
+│   ├── sprite/
+│   │   ├── BaseSprite.java
+│   │   └── BaseSprite_help.txt
 │   ├── inventory/
 │   │   ├── Inventory.java
+│   │   ├── InventoryContainer.java
+│   │   ├── BodySlot.java
 │   │   └── Inventory_help.txt
-│   └── projectiles/
-│       ├── Bullet.java
-│       └── Bullet_help.txt
+│   ├── messages/
+│   │   ├── HitReceiver.java
+│   │   ├── DamageType.java
+│   │   └── Messages_help.txt
+│   └── items/
+│       ├── Item.java                       👈 Interface only
+│       └── Item_help.txt
 │
-└── integration/                   👈 Both own this
-    ├── tests/
-    │   └── BulletHitIntegrationTest.java
-    └── Integration_help.txt
-```
-
-### 6.2 Help.txt Format
-
-```text
-FILENAME.java
-DOC_VERSION: YYYY-MM-DD-vN
-OWNER: [IDA/Akashi]
-BEHAVIOR SOURCE: Real life
-
-PUBLIC METHODS (contract):
-- methodName(params) -> what it does
-
-WHAT I NEED FROM OTHER DOMAIN:
-- Interface or method required
-
-EXAMPLE:
-- How to use this box
-
-OWNER CONTACT: [name]
+├── entities/                               👈 SELF-CONTAINED ENTITIES
+│   ├── human/
+│   │   ├── Human.java                      👈 extends BaseEntity
+│   │   ├── player/
+│   │   │   ├── PlayerEntity.java
+│   │   │   ├── PlayerAI.java
+│   │   │   ├── PlayerSprite.java
+│   │   │   └── Player_help.txt
+│   │   ├── bandit/
+│   │   │   ├── BanditEntity.java
+│   │   │   ├── BanditAI.java
+│   │   │   ├── BanditSprite.java
+│   │   │   └── Bandit_help.txt
+│   │   └── scavenger/
+│   │       ├── ScavengerEntity.java
+│   │       ├── ScavengerAI.java
+│   │       ├── ScavengerSprite.java
+│   │       └── Scavenger_help.txt
+│   └── infected/
+│       ├── Infected.java                   👈 extends BaseEntity
+│       ├── walker/
+│       │   ├── InfectedWalkerEntity.java
+│       │   ├── InfectedWalkerAI.java
+│       │   ├── InfectedWalkerSprite.java
+│       │   └── InfectedWalker_help.txt
+│       ├── boomer/
+│       │   ├── BoomerEntity.java
+│       │   ├── BoomerAI.java
+│       │   ├── BoomerSprite.java
+│       │   └── Boomer_help.txt
+│       ├── runner/
+│       │   ├── ViralEntity.java
+│       │   ├── ViralAI.java
+│       │   ├── ViralSprite.java
+│       │   └── Viral_help.txt
+│       ├── jumper/
+│       │   ├── JumperEntity.java
+│       │   ├── JumperAI.java
+│       │   ├── JumperSprite.java
+│       │   └── Jumper_help.txt
+│       ├── tank/
+│       │   ├── TankEntity.java
+│       │   ├── TankAI.java
+│       │   ├── TankSprite.java
+│       │   └── Tank_help.txt
+│       └── evolved/
+│           ├── EvolvedEntity.java
+│           ├── EvolvedAI.java
+│           ├── EvolvedSprite.java
+│           └── Evolved_help.txt
+│
+├── view/                                   👈 RENDERING (LibGDX)
+│   ├── camera/
+│   │   ├── GameCamera.java
+│   │   └── Camera_help.txt
+│   ├── ui/
+│   │   ├── InventoryUI.java
+│   │   ├── HealthBar.java
+│   │   └── UI_help.txt
+│   ├── effects/
+│   │   ├── BulletTrail.java
+│   │   ├── MuzzleFlash.java
+│   │   └── Effects_help.txt
+│   └── renderer/
+│       ├── GameRenderer.java
+│       └── Renderer_help.txt
+│
+├── core/                                   👈 GLUE
+│   ├── GameOrchestrator.java
+│   ├── LibGDXGame.java
+│   ├── InputHandler.java
+│   └── Core_help.txt
+│
+├── integration/                            👈 TESTS
+│   ├── tests/
+│   │   ├── BulletHitTest.java
+│   │   ├── InventoryWeightTest.java
+│   │   └── ControllerPossessionTest.java
+│   └── Integration_help.txt
+│
+└── akashi_items/                           👈 AKASHI'S DOMAIN
+    ├── weapons/
+    │   ├── firearm/AKM.java
+    │   ├── melee/Axe.java
+    │   └── diy/Bow.java
+    ├── armor/
+    │   ├── ArmGuard.java
+    │   └── BallisticVest.java
+    ├── consumables/
+    │   ├── DuctTape.java
+    │   └── Food.java
+    └── backpacks/
+        ├── HikingBackpack.java
+        └── MilitaryBackpack.java
 ```
 
 ---
 
-## 7. Development Workflow
+## 11. Development Workflow
 
-### 7.1 Daily Cycle
-
-```
-1. git pull
-2. Work in your domain only
-3. Run integration tests before commit
-4. git add . + git commit -m "message"
-5. git push
-```
-
-### 7.2 Integration Test Rule
-
-Before pushing, run:
+### 11.1 Daily Cycle
 
 ```bash
-.\gradlew test
+git pull
+# Work in your domain only
+./gradlew test          # Run integration tests before commit
+git add .
+git commit -m "message"
+git push
 ```
+
+### 11.2 Integration Test Rule
 
 If integration test fails:
 - IDA's test fails → IDA fixes
 - Akashi's test fails → Akashi fixes
-- Both review the failure together
+- Both review together
 
-### 7.3 Crack Protocol
+### 11.3 Crack Protocol
 
-When a box must be opened (debugging):
-
-1. Message the owner: "Need to crack [box name]"
+1. Message owner: "Need to crack [box name]"
 2. Owner responds: "Go ahead" or "Let me look first"
-3. Open the box (access internal code)
-4. Fix only what's broken
-5. Update help.txt if public methods changed
-6. Close the box
-7. Run integration tests
-8. Push with "CRACK: [box name]" in commit message
+3. Open box, fix only what's broken
+4. Update `_help.txt` if public methods changed
+5. Run integration tests
+6. Push with `CRACK: [box name]` in commit message
 
 **One crack at a time. No silent cracks.**
 
 ---
 
-## 8. Integration Testing Protocol
+## 12. Version 0.1 Milestone
 
-### 8.1 Critical Test: Bullet Hits Player
-
-```java
-@Test
-public void bulletHitsPlayer() {
-    Player player = new Player(0, 0);
-    AKM gun = new AKM();
-    Bullet bullet = gun.fireAt(0, 0, 0);  // Fires at player
-    
-    bullet.update(1.0f);  // Simulate travel
-    
-    assert player.getHealth() < 100;
-}
-```
-
-### 8.2 Test Ownership
-
-| Test | Owner |
-|------|-------|
-| Bullet → Player hit | Both (written together) |
-| Bullet → Zombie hit | IDA |
-| Armor durability | Akashi |
-| Duct tape repair | Akashi |
-| Debuff on low health | IDA |
-
----
-
-## 9. Documentation Standard
-
-### 9.1 Required Docs Per Box
-
-| File | Required? | Who writes |
-|------|-----------|------------|
-| `.java` source | Yes | Owner |
-| `_help.txt` | Yes | Owner (after code stabilizes) |
-| `_help.txt` version match | Yes | CI or manual check |
-
-### 9.2 Version Matching
-
-Code file header:
-```java
-// DOC_VERSION: 2026-04-23-v1
-```
-
-Help.txt header:
-```text
-DOC_VERSION: 2026-04-23-v1
-CODE_FILE: ClassName.java
-```
-
-If versions mismatch → crack protocol.
-
----
-
-## 10. Version 0.1 Milestone
-
-### 10.1 Scope (Minimum Viable Product)
+### 12.1 Scope (Minimum Viable Product)
 
 | Component | Status |
 |-----------|--------|
@@ -385,80 +527,83 @@ If versions mismatch → crack protocol.
 | Player takes damage | Target |
 | Arm guard (3 bite layers) | Target |
 | Duct tape (repairs 1 layer) | Target |
+| Basic inventory (5x5 grid) | Target |
 | Integration test passes | Target |
 
-### 10.2 Out of Scope for v0.1
+### 12.2 Out of Scope for v0.1
 
 - Runner / Large infected
 - Ballistic vest
-- Backpack
+- Backpack container
 - Hunger system
-- Multiple weapons
+- Multiple weapons (just AKM)
 - Stealth
-- Dismemberment
+- Network multiplayer
 
-### 10.3 Target Date
+### 12.3 Target Date
 
 2-3 weeks from project start.
 
 ---
 
-## 11. Risk Register
+## 13. Risk Register
 
 | Risk | Probability | Mitigation |
 |------|-------------|------------|
-| Git merge conflicts | Medium | Work in separate domains. Never same file. |
+| Git merge conflicts | Medium | Separate domains, never same file |
 | Help.txt drifts from code | Medium | Version headers + crack protocol |
 | Friend loses motivation | Low | Clear ownership, no creative friction |
 | LibGDX learning curve | Low (IDA) / Medium (Akashi) | Start with LibGDX demo |
 | Integration test gaps | Medium | Add test for every contract |
-| Scope creep | High | Strict v0.1 milestone. No extras. |
+| Scope creep | High | Strict v0.1 milestone |
 
 ---
 
-## 12. Glossary
+## 14. Glossary
 
 | Term | Definition |
 |------|-------------|
-| **Black Box** | A unit with defined contract, no internal visibility required |
-| **Contract** | Public methods + help.txt |
+| **Black Box** | Unit with defined contract, no internal visibility |
+| **Contract** | Public methods + `_help.txt` |
 | **Crack** | Opening a box to debug or modify |
-| **Domain** | Owner's complete area (ida_domain, akashi_domain) |
+| **Domain** | Owner's area (IDA or Akashi) |
 | **Help.txt** | Human/AI readable contract documentation |
 | **HitReceiver** | Primary cross-domain interface |
-| **Integration test** | Test that verifies contract between domains |
-| **Owner** | Person responsible for a box. Name on it. |
+| **Integration test** | Test verifying contract between domains |
+| **Possession** | Controller taking control of an entity |
+| **Container** | Grid-based inventory storage (backpack, main inventory) |
 
 ---
 
 ## Appendix A: Quick Reference Card
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│              ITU_S v0.0.1 - QUICK REFERENCE                 │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  RUN: .\gradlew lwjgl3:run                                  │
-│  TEST: .\gradlew test                                       │
-│                                                              │
-│  DOMAINS:                                                   │
-│    ida_domain/    ← IDA (combat, AI, player, infected)      │
-│    akashi_domain/ ← Akashi (items, weapons, inventory)      │
-│                                                              │
-│  CONTRACT:                                                  │
-│    HitReceiver.hit(int damage, DamageType type)             │
-│                                                              │
-│  RULES:                                                     │
-│    • No cross-domain imports (except HitReceiver)          │
-│    • Bullets call hit() on whatever they touch             │
-│    • Help.txt matches code version                         │
-│    • One crack at a time                                   │
-│    • Integration test must pass before push                │
-│                                                              │
-│  MILESTONE v0.1:                                           │
-│    Player + Walker + AKM + Bullet + ArmGuard + DuctTape    │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    ITU_S v0.0.1 - QUICK REFERENCE                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  RUN:     .\gradlew lwjgl3:run                                          │
+│  TEST:    .\gradlew test                                                │
+│                                                                          │
+│  DOMAINS:                                                               │
+│    lib/           Base classes (Entity, AI, Sprite, Inventory)          │
+│    entities/      Self-contained entities (player, bandit, infected)    │
+│    akashi_items/  Akashi's item implementations                         │
+│                                                                          │
+│  CONTRACT:                                                              │
+│    HitReceiver.hit(int damage, DamageType type)                         │
+│                                                                          │
+│  RULES:                                                                 │
+│    • Logic has no LibGDX imports                                        │
+│    • Entities self-contained in one folder                              │
+│    • Help.txt beside every class                                        │
+│    • One crack at a time                                                │
+│    • Integration test must pass before push                             │
+│                                                                          │
+│  MILESTONE v0.1:                                                        │
+│    Player + Walker + AKM + Bullet + ArmGuard + DuctTape                 │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -472,7 +617,7 @@ If versions mismatch → crack protocol.
 | 3 | Walker takes damage, dies | Bullet collision detection |
 | 4 | Integration test (bullet hits player) | Fix bullet test together |
 | 5 | Arm guard + bite damage | Duct tape item |
-| 6 | Polish + bug fixes | Polish + bug fixes |
+| 6 | Basic inventory (5x5 grid) | Item size/weight properties |
 | 7 | First playable build | First playable build |
 
 ---
@@ -506,8 +651,45 @@ OWNER CONTACT: [name]
 
 ---
 
-**END OF DOCUMENT**
+## Appendix D: Example Item Implementation (Akashi)
 
-*IDA + Akashi — Onward to the future alongside the technology*
+```java
+// akashi_items/weapons/firearm/AKM.java
+package com.itus.akashi_items.weapons.firearm;
+
+import com.itus.lib.items.Item;
+import com.itus.lib.items.ItemType;
+
+public class AKM implements Item {
+    @Override
+    public String getName() { return "AKM"; }
+    
+    @Override
+    public float getBaseWeightKg() { return 4.3f; }
+    
+    @Override
+    public int getWidth() { return 3; }
+    
+    @Override
+    public int getHeight() { return 1; }
+    
+    @Override
+    public ItemType getType() { return ItemType.FIREARM; }
+    
+    @Override
+    public void onUse(Entity user) {
+        // Spawn bullet at user's position toward aim direction
+        Bullet bullet = new Bullet(user.getX(), user.getY(), user.getAimDirection());
+        bullet.setDamage(34);
+        user.getWorld().addProjectile(bullet);
+    }
+}
+```
 
 ---
+
+**END OF DOCUMENT**
+
+---
+
+*IDA Industries — "Onward to the unknown, inward to our fears, upward to our dreams."
