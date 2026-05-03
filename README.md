@@ -1,4 +1,3 @@
-Here's your **ITU_S Technical Specification v0.0.1** in your IDA spec format.
 
 ---
 
