@@ -1,0 +1,50 @@
+BaseEntity.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+BEHAVIOR SOURCE: Real life
+
+WHAT I AM:
+Root class for every living thing in the game world.
+Player, Bandit, Scavenger, Zombie, Tank — all extend me.
+
+PUBLIC METHODS (contract):
+
+CONSTRUCTORS:
+- BaseEntity(x, y, faction) -> Creates entity at position with faction
+
+MOVEMENT:
+- move(dx, dy) -> Moves entity by delta (float)
+- setPosition(x, y) -> Teleports to absolute position
+
+HEALTH:
+- takeDamage(damage) -> Reduces health (can't go below 0)
+- heal(amount) -> Increases health (can't exceed 100)
+- isDead() -> Returns true if health <= 0
+
+GETTERS:
+- getX() / getY() -> Current position
+- getHealth() -> Current health (0-100)
+- getFaction() -> HUMAN or INFECTED
+
+SETTERS:
+- setHealth(health) -> Direct set (use carefully)
+
+WHAT I NEED FROM OTHER DOMAINS:
+- Inventory (later) — I hold a reference but don't manage it
+- Controller (later) — I can be possessed
+
+WHAT I DO NOT KNOW:
+- How rendering works (sprites handle that)
+- Input handling (controllers handle that)
+- Inventory contents (inventory system handles that)
+- AI behavior (AI classes handle that)
+
+EXAMPLE:
+PlayerEntity player = new PlayerEntity(100, 200);
+player.move(5, 0);        // Move right 5 units
+player.takeDamage(25);    // Health becomes 75
+if (player.isDead()) {
+    // Handle death
+}
+
+OWNER CONTACT: IDA

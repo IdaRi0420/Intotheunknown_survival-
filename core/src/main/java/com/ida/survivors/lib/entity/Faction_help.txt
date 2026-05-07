@@ -1,0 +1,46 @@
+Faction.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+
+WHAT I AM:
+Enum defining which "team" an entity belongs to.
+
+PUBLIC METHODS (contract):
+
+ENUM VALUES:
+- HUMAN -> Player, Bandit, Army, Scavenger
+- INFECTED -> All zombie types
+
+INSTANCE METHODS:
+- isHostileTo(other) -> Returns true if factions naturally attack each other
+  Example: INFECTED.isHostileTo(HUMAN) -> true
+           HUMAN.isHostileTo(INFECTED) -> true
+           HUMAN.isHostileTo(HUMAN) -> false (by default)
+
+- toString() -> Human-readable name ("Human", "Infected")
+
+WHAT I AM USED FOR:
+1. AI targeting decisions (who to attack)
+2. UI display (faction name above health bar)
+3. Hit effects (bullets don't check — but AI does)
+
+WHAT I AM NOT USED FOR:
+- Bullet hit validation (bullets hit EVERYONE — realism)
+- Damage modification (armor handles that)
+- Player permissions (not an RPG with faction locking)
+
+IMPORTANT RULE:
+Faction determines NATURAL hostility (Infected vs Human).
+Sub-faction hostility (Bandit vs Army) is handled in specific AI classes,
+NOT in this enum. This keeps the base simple.
+
+EXAMPLE:
+BaseEntity player = new PlayerEntity(0, 0);
+BaseEntity zombie = new InfectedWalker(10, 0);
+
+if (player.getFaction().isHostileTo(zombie.getFaction())) {
+    // true -> zombie AI will attack player
+    zombieAI.setTarget(player);
+}
+
+OWNER CONTACT: IDA

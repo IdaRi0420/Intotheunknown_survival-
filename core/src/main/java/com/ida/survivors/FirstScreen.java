@@ -1,45 +1,53 @@
 package com.ida.survivors;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.GL20;
+import com.ida.survivors.core.GameOrchestrator;
 
-/** First screen of the application. Displayed after the application is created. */
 public class FirstScreen implements Screen {
+    
+    private GameOrchestrator game;
+    
     @Override
     public void show() {
-        // Prepare your screen here.
+        game = GameOrchestrator.getInstance();
     }
-
+    
     @Override
     public void render(float delta) {
-        // Draw your screen here. "delta" is the time since last render in seconds.
+        // Clear screen
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        
+        // Update and render
+        game.update(delta);
+        game.render();
     }
-
+    
     @Override
     public void resize(int width, int height) {
-        // If the window is minimized on a desktop (LWJGL3) platform, width and height are 0, which causes problems.
-        // In that case, we don't resize anything, and wait for the window to be a normal size before updating.
-        if(width <= 0 || height <= 0) return;
-
-        // Resize your screen here. The parameters represent the new window size.
+        if (width <= 0 || height <= 0) return;
+        if (game != null) {
+            game.resize(width, height);
+        }
     }
-
+    
     @Override
     public void pause() {
-        // Invoked when your application is paused.
+        if (game != null) game.pause();
     }
-
+    
     @Override
     public void resume() {
-        // Invoked when your application is resumed after pause.
+        if (game != null) game.resume();
     }
-
+    
     @Override
-    public void hide() {
-        // This method is called when another screen replaces this one.
-    }
-
+    public void hide() {}
+    
     @Override
     public void dispose() {
-        // Destroy screen's assets here.
+        if (game != null) game.dispose();
     }
 }

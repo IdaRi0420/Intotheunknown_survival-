@@ -1,0 +1,77 @@
+PlayerEntity.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+BEHAVIOR SOURCE: Real life
+
+WHAT I AM:
+The player-controlled character. Just a Human entity with a PlayerController attached.
+I am NOT special — same health, inventory, and rules as Bandit or Scavenger.
+
+PHILOSOPHY:
+- Player is a role, not a unique class
+- If controller disconnects, I become AI-controlled (Scavenger)
+- Multiplayer: multiple PlayerEntity instances exist (one per human)
+
+PUBLIC METHODS (contract):
+
+CONSTRUCTORS:
+- PlayerEntity(x, y) -> Creates player at position. Name = "Survivor"
+- PlayerEntity(x, y, name) -> Creates player with custom name
+
+MOVEMENT:
+- move(dx, dy) -> Moves player by delta (respects diagonal normalization)
+- setSpeed(speed) -> Changes movement speed (default 200)
+- getSpeed() -> Returns current speed
+
+CONTROLLER / POSSESSION:
+- possess(controllerId) -> Human takes control (provide UUID)
+- relinquish() -> Human releases control (entity becomes AI)
+- isPossessed() -> Returns true if human-controlled
+- getControllerId() -> Returns UUID of controller, or null
+
+PLAYER INFO:
+- setPlayerName(name) -> Change display name
+- getPlayerName() -> Get display name
+
+NETWORK (Phase 3):
+- getNetworkState() -> Returns serializable state for sync
+- applyNetworkState(state) -> Applies state from server
+
+PHASE 2 STUBS:
+- initStarterGear() -> Equips starting items
+- onDeath() -> Handles death, loot drop, respawn
+
+WHAT I EXTEND:
+Human (entities/human/Human.java)
+
+WHAT CONTROLS ME:
+- Phase 1: InputHandler (direct)
+- Phase 2: PlayerController (wraps input)
+- Phase 3: NetworkPlayerController (remote input)
+
+WHAT I NEED FROM OTHER DOMAINS:
+- Inventory system (Phase 2)
+- Item system (Akashi's items)
+- Network system (Phase 3)
+
+EXAMPLE (Phase 1):
+PlayerEntity player = new PlayerEntity(100, 200, "IDA");
+player.move(5, 0);    // Move right 5 units at speed 200
+
+if (player.isPossessed()) {
+    // Player is controlling
+} else {
+    // AI is controlling (disconnect or debug)
+}
+
+EXAMPLE (Phase 2 possession):
+PlayerController controller = new PlayerController();
+controller.possess(player);
+// Controller reads input, calls player.move()
+
+NETWORK NOTE:
+In multiplayer, each connected human has their own PlayerEntity.
+Server owns all entities. Clients send input, server applies movement.
+Player name appears above head (UI) and in chat.
+
+OWNER CONTACT: IDA

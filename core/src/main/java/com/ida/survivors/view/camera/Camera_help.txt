@@ -1,0 +1,76 @@
+GameCamera.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+
+WHAT I AM:
+Camera that follows the player with smooth movement.
+Handles viewport, screen shake, and coordinate conversion.
+
+KEY METHODS:
+
+SETUP:
+- setTarget(entity) -> Camera follows this entity
+- clearTarget() -> Free camera mode (stops following)
+- resize(width, height) -> Called when window resizes
+
+UPDATE (called every frame):
+- update(deltaTime) -> Update camera position, follow target, apply shake
+
+SCREEN SHAKE:
+- shake(intensity, duration) -> Trigger shake (e.g., 5, 0.3f for small boom)
+- isShaking() -> Check if camera is currently shaking
+
+ZOOM (Phase 3):
+- setZoom(zoom) -> Change zoom (1.0 = normal, 0.5 = zoom out, 2.0 = zoom in)
+- getZoom() -> Get current zoom level
+
+COORDINATE CONVERSION:
+- unproject(screenX, screenY) -> Screen pixels to world coordinates (mouse aiming)
+- project(worldX, worldY) -> World to screen coordinates (UI positioning)
+
+CAMERA BOUNDS:
+- getLeft() / getRight() / getBottom() / getTop() -> Visible world edges
+- setWorldBounds(minX, maxX, minY, maxY) -> Limit camera movement (Phase 2)
+
+GETTERS:
+- getCamera() -> LibGDX OrthographicCamera (for renderer)
+- getX() / getY() -> Camera center position
+
+SMOOTHING CONFIGURATION:
+- setSmoothFactor(0.1f) -> Lower = smoother but laggier
+- setDeadZone(50, 50) -> Camera doesn't move until target leaves zone
+
+PHASE 1 BEHAVIOR:
+- Simple follow (smoothFactor = 0.1, deadZone = 0)
+- No screen shake yet (stubbed)
+- No world boundaries
+
+PHASE 2 (Planned):
+- Screen shake on hit/explosion
+- World boundaries (prevent showing outside map)
+- Dead zone configuration
+
+PHASE 3 (Planned):
+- Smooth zoom transitions
+- Zoom limits (min/max)
+- Map zoom-out mode
+
+EXAMPLE (GameOrchestrator):
+// Create camera
+GameCamera camera = new GameCamera();
+
+// Set target to follow
+camera.setTarget(player);
+
+// Update each frame
+camera.update(deltaTime);
+
+// Get camera for rendering
+renderer.setCamera(camera.getCamera());
+
+// Trigger shake on hit
+if (playerWasHit) {
+    camera.shake(5f, 0.2f);
+}
+
+OWNER CONTACT: IDA

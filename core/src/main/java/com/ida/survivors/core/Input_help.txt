@@ -1,0 +1,51 @@
+InputHandler.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+
+WHAT I AM:
+Manages keyboard and mouse input for player control.
+Implements LibGDX InputProcessor for event-driven input.
+
+KEY METHODS:
+
+UPDATE LOOP:
+- update(delta) -> Called every frame, moves player based on pressed keys
+
+PLAYER CONTROL:
+- setPlayer(player) -> Assign player entity to control
+- getPlayer() -> Get current player reference
+
+INPUT HANDLING (LibGDX callbacks):
+- keyDown() / keyUp() -> WASD movement, ESC exit, F3 debug
+- touchDown() / touchUp() -> Mouse click for shooting
+- mouseMoved() / touchDragged() -> Track mouse for aiming
+- mouseScrolled() -> Phase 2: hotbar switching
+
+DEBUG:
+- setDebugMode(bool) -> Enable/disable console output
+- toggleDebugMode() -> F3 key toggles debug
+
+MOVEMENT:
+- WASD controls player
+- Diagonal movement normalized (no speed boost)
+- Movement speed = player.getSpeed() (default 200)
+
+PHASE 2 PLANNED:
+- Mouse click = shoot toward cursor
+- Number keys 1-9 = hotbar selection
+- ESC = pause menu
+- R = reload weapon
+
+CONTROLS (Phase 1):
+- W/A/S/D = Move
+- ESC = Exit game (temporary)
+- F3 = Toggle debug mode (prints position)
+
+EXAMPLE:
+InputHandler input = new InputHandler();
+input.setPlayer(player);
+
+// In game loop:
+input.update(deltaTime);
+
+OWNER CONTACT: IDA

@@ -1,0 +1,63 @@
+GameOrchestrator.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+
+WHAT I AM:
+The central coordinator of the game. The "Orchestrator" from the Black Box Doctrine.
+
+RESPONSIBILITIES:
+- Hold game state (player, world, entities)
+- Update everything each frame
+- Render everything each frame
+- Process input
+- Manage game loop
+
+KEY METHODS:
+
+GAME LOOP:
+- update(delta) -> Called every frame before render (process input, move entities)
+- render() -> Called every frame after update (draw everything)
+- resize(width, height) -> Called when window resizes
+
+GAME CONTROL:
+- pause() / resume() -> Stop/start updates
+- dispose() -> Clean up all resources (critical for memory)
+
+GETTERS:
+- getPlayer() -> Get player entity (for input, tests)
+- getCamera() -> Get game camera (for rendering)
+- getDeltaTime() -> Time since last frame (debugging)
+
+PHASE 1 BEHAVIOR:
+- Player created at screen center
+- Player sprite = green rectangle (no assets needed)
+- Camera follows player
+- WASD moves player
+
+PHASE 2 (Planned):
+- Add world system (GameWorld class)
+- Add multiple entities (zombies, items)
+- Add collision detection
+- Add inventory system
+
+PHASE 3 (Multiplayer):
+- Network input instead of local
+- Server owns entity state
+- Client only renders and sends input
+
+EXAMPLE (In LibGDXGame):
+GameOrchestrator game = GameOrchestrator.getInstance();
+
+@Override
+public void render() {
+    float delta = Gdx.graphics.getDeltaTime();
+    game.update(delta);
+    game.render();
+}
+
+BLACK BOX DOCTRINE NOTE:
+- Orchestrator doesn't look inside boxes
+- It only calls public methods on entities, sprites, renderer
+- It wires components together without knowing internals
+
+OWNER CONTACT: IDA

@@ -1,0 +1,79 @@
+PlayerSprite.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+BEHAVIOR SOURCE: LibGDX rendering
+
+WHAT I AM:
+Visual representation of the player entity.
+I draw the player on screen using LibGDX.
+
+SEPARATION OF CONCERNS:
+- PlayerEntity: Logic (position, health, inventory)
+- PlayerSprite: Rendering (textures, animations, UI)
+- NO logic in sprite. NO rendering in entity.
+
+PUBLIC METHODS (contract):
+
+CONSTRUCTORS:
+- PlayerSprite(player) -> Phase 1: Uses colored rectangle (no assets)
+- PlayerSprite(player, loadTexture) -> Phase 2: Attempts to load PNG
+
+RENDERING:
+- render(batch) -> Draws player at current position (called every frame)
+- renderHealthBar(batch) -> Phase 2: Draws health percentage above player
+- renderNameTag(batch, font) -> Phase 3: Draws player name above head
+
+ANIMATION:
+- updateAnimation(deltaTime) -> Phase 3: Walking/running/idle frames
+- playHitAnimation() -> Phase 3: Flash white, knockback effect
+- playDeathAnimation() -> Phase 3: Fall down, fade out
+
+CLEANUP:
+- dispose() -> Free textures and shape renderer (important! prevents memory leaks)
+
+GETTERS:
+- getWidth() / getHeight() -> Sprite dimensions (32x32)
+- isUsingTexture() -> True if PNG loaded, false if fallback
+- getPlayer() -> Reference to player entity
+
+WHAT I NEED FROM LIBGDX:
+- com.badlogic.gdx.graphics.Texture
+- com.badlogic.gdx.graphics.g2d.SpriteBatch
+- com.badlogic.gdx.graphics.glutils.ShapeRenderer
+- com.badlogic.gdx.graphics.Color
+
+WHAT I ASSUME:
+- Player position (x, y) is world coordinate
+- Sprite is centered on that position
+- Phase 1: No assets needed (ShapeRenderer only)
+- Phase 2: player.png exists in assets/ folder
+
+EXAMPLE USAGE (in GameRenderer):
+// Setup
+PlayerEntity player = new PlayerEntity(100, 200);
+PlayerSprite sprite = new PlayerSprite(player);
+
+// In render loop (called 60x per second)
+sprite.render(batch);
+
+// Shutdown
+sprite.dispose();
+
+PHASE 1 NOTES:
+- Uses ShapeRenderer (no texture files needed)
+- Green rectangle = player
+- Size: 32x32 pixels
+- Works immediately without any assets
+
+PHASE 2 TRANSITION:
+1. Create assets/player.png (32x32 or 64x64)
+2. Change to PlayerSprite(player, true)
+3. Texture will load automatically
+4. If file missing, falls back to rectangle
+
+PHASE 3+ (Future):
+- Animation frames (walk_left.png, walk_right.png, etc.)
+- Particle effects (blood, footsteps)
+- Attached UI elements (health bar, name tag)
+
+OWNER CONTACT: IDA

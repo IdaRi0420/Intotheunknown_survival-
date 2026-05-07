@@ -1,0 +1,59 @@
+Human.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+BEHAVIOR SOURCE: Real life
+
+WHAT I AM:
+Intermediate base class for all human entities.
+Player, Bandit, Army, Scavenger all extend me.
+
+WHY I EXIST:
+- Set faction = HUMAN automatically
+- Provide place for human-specific logic (infection, inventory, morale)
+- Make the entity hierarchy readable
+
+PUBLIC METHODS (contract):
+
+CONSTRUCTOR:
+- Human(x, y) -> Creates human at position. Faction = HUMAN. Health = 100.
+
+PROTECTED METHODS (for child classes):
+- initInventory(size) -> Stub. Phase 2: enables inventory system
+- onBite(damage) -> Called when bite penetrates armor. Phase 2: starts infection timer
+
+PUBLIC METHODS:
+- useItem(item) -> Phase 2: uses item from inventory
+
+WHAT I EXTEND:
+BaseEntity (lib/entity/BaseEntity.java)
+
+WHAT EXTENDS ME:
+- PlayerEntity (entities/human/player/PlayerEntity.java)
+- BanditEntity (entities/human/bandit/BanditEntity.java)
+- ScavengerEntity (entities/human/scavenger/ScavengerEntity.java)
+- ArmyEntity (entities/human/organized/ArmyEntity.java)
+
+WHAT I ADD TO BASEENTITY:
+- Faction preset to HUMAN
+- Stubs for inventory and infection (Phase 2)
+- No new public fields or getters
+
+WHAT I DO NOT DO:
+- Inventory management (inventory system does that)
+- Infection progression (separate system)
+- AI behavior (AI classes handle that)
+- Rendering (sprites handle that)
+
+EXAMPLE:
+// Creating a player
+PlayerEntity player = new PlayerEntity(100, 200);
+
+// All humans have HUMAN faction
+if (player.getFaction() == Faction.HUMAN) {
+    // true
+}
+
+// Bite handling (Phase 2)
+// player.onBite(100); // Called when arm guard fails
+
+OWNER CONTACT: IDA

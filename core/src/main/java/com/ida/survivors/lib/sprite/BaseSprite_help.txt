@@ -1,0 +1,84 @@
+BaseSprite.java
+OWNER: IDA
+DOC_VERSION: 2026-05-04-v1
+BEHAVIOR SOURCE: LibGDX rendering patterns
+
+WHAT I AM:
+Abstract base class for all visual representations of entities.
+Every entity that appears on screen needs a sprite extending me.
+
+WHY I EXIST:
+- Separate rendering from game logic
+- Allow changing art without touching code
+- Enable network multiplayer (logic on server, sprites on client)
+- Provide common functionality (visibility, layers, alpha)
+
+PUBLIC METHODS (contract):
+
+ABSTRACT (MUST IMPLEMENT):
+- render(batch) -> Draw sprite at entity position (called every frame)
+- dispose() -> Free GPU resources (textures, etc.)
+
+OPTIONAL (OVERRIDE AS NEEDED):
+- update(deltaTime) -> Update animations, effects (called before render)
+
+VISIBILITY:
+- setVisible(bool) -> Hide/show sprite (e.g., death fade)
+- isVisible() -> Check if sprite should render
+
+LAYER/Z-ORDER:
+- setLayer(layer) -> Render order (higher = on top)
+- getLayer() -> Get current layer
+
+TRANSPARENCY:
+- setAlpha(alpha) -> Opacity (0.0-1.0)
+- getAlpha() -> Current alpha
+- applyAlpha(batch, originalColor) -> Helper for alpha blending
+
+BOUNDING BOX (Debug/Selection):
+- getBoundingX/Y() -> Position (default: entity position)
+- getBoundingWidth/Height() -> Size (default: 32x32)
+
+RESOURCE MANAGEMENT:
+- isReady() -> Check if textures loaded
+- reload() -> Reload after settings change
+
+COMMON LAYERS:
+- 0: Ground/tiles (below everything)
+- 1: Entities (player, zombies, items)
+- 2: Projectiles (bullets, arrows)
+- 3: Effects (muzzle flash, blood)
+- 4: UI (health bars, name tags)
+
+EXAMPLE (Minimal sprite):
+public class PlayerSprite extends BaseSprite {
+    private PlayerEntity player;
+    private Texture texture;
+    
+    public PlayerSprite(PlayerEntity player) {
+        this.player = player;
+        this.texture = new Texture("player.png");
+    }
+    
+    @Override
+    public void render(SpriteBatch batch) {
+        batch.draw(texture, player.getX(), player.getY());
+    }
+    
+    @Override
+    public void dispose() {
+        texture.dispose();
+    }
+}
+
+WHAT I ASSUME:
+- LibGDX is initialized (SpriteBatch, graphics context)
+- Entity position is in world coordinates
+- Renderer calls render() with an active SpriteBatch
+
+SHARED STATE ACROSS SPRITES:
+- Each sprite instance renders ONE entity
+- Multiple sprites can share the same texture (static field)
+- Renderer manages batches, not sprites
+
+OWNER CONTACT: IDA
